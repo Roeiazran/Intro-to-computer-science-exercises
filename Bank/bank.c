@@ -74,7 +74,6 @@ int main() {
  @return account number entered by the user
  */
 unsigned int getAccountNumberInput(void) {
-
     unsigned int accountNumber;
     printf("Enter account number:\n"); // prompt the user to enter his account number
     scanf("%u", &accountNumber); // scan the user input
@@ -96,7 +95,6 @@ void printAccountNotFound(void) {
  @param bank Pointer to the bank structure.
  */
 void freeBank(Bank ** bank) {
-
     Node *temp; // temporary pointer to avoid loosing access when freeing nodes
     
     freeListOfTransaction((*bank)->transactions); // call to deallocate the transactions list
@@ -121,7 +119,6 @@ void freeBank(Bank ** bank) {
  @return account on successes and nullptr on failure
  */
 Node * getAccountByNumber(Node * accountsHead, unsigned int accountNumber) {
-    
     while (accountsHead != NULL) {
 
         // search the account in the system 
@@ -143,7 +140,6 @@ Node * getAccountByNumber(Node * accountsHead, unsigned int accountNumber) {
  @return Dynamically allocated string containing user input.
  */
 char *getInfiniteString(char * customString, Bank ** bank) {
-    
     char scannedChar;
     printf("%s\n", customString);
     scanf("%c", &scannedChar);
@@ -185,7 +181,6 @@ char *getInfiniteString(char * customString, Bank ** bank) {
  @param bank Pointer to the bank (freed on allocation failure).
  */
 void addNewAccount(Node ** accounts, Account * newAccount, Bank ** bank) {
-    
     Node * account = (Node*)malloc(sizeof(Node)); // allocate memory
     
     //free and exit the program on allocation failure
@@ -208,9 +203,7 @@ void addNewAccount(Node ** accounts, Account * newAccount, Bank ** bank) {
  @return Pointer to the newly allocated Account structure.
  */
 Account * makeAccount(unsigned int accountNumber, char * holderName, Bank ** bank) {
-
-    //allocate memory for the new account
-    Account * account = (Account*)malloc(sizeof(Account));
+    Account * account = (Account*)malloc(sizeof(Account)); //allocate memory for the new account
     
     //free the bank if allocation failed
     if (account == NULL) {
@@ -230,7 +223,6 @@ Account * makeAccount(unsigned int accountNumber, char * holderName, Bank ** ban
  @param bank bank
  */
 void getAccountDetails(Bank ** bank) {
-
     unsigned int accountNumber = getAccountNumberInput(); // get the account number from the user
     
     //check if account if the account already exists
@@ -305,7 +297,6 @@ void deleteAccount(Node ** accountsHead) {
  @param bank Pointer to the bank.
  */
 void updateAccount(Bank ** bank) {
-
     unsigned int accountNumber = getAccountNumberInput(); // get the account number from the user
     Node * accounts = (*bank)->accounts, * account = getAccountByNumber(accounts, accountNumber);
 
@@ -321,612 +312,634 @@ void updateAccount(Bank ** bank) {
 }
 
 /**
- @brief function to make a single transaction
- the function get the transaction detalis and allocating new transaction
- @param amount transaction
- @param from transaction
- @param to transaction
- @param bank the main bank
- @return single Transaction sturcture
+ @brief Creates a single transaction.
+ Allocates memory and initializes the transaction details.
+ @param amount Transaction amount.
+ @param from Source account number.
+ @param to Destination account number.
+ @param bank Pointer to the bank (freed on allocation failure).
+ @return Pointer to the newly allocated Transaction structure.
  */
 Transaction * makeTransaction(int amount, unsigned int from, unsigned int to, Bank ** bank) {
     Transaction * transaction = (Transaction*)malloc(sizeof(Transaction));
-    //check for allocation faliure and frees the bank
-    if (transaction == NULL) {
+
+    if (transaction == NULL) { // free if allocation failed
         freeBank(bank);
     }
-    //assing transaction details and return it
+
+    // update transaction
     transaction->amount = amount;
     transaction->fromAccount = from;
     transaction->toAccount = to;
     return transaction;
 }
+
 /**
- @brief function to add new transaction to the end of transactions list
- the function recursively advance transactions head to the end and add new transaction to it
- @param bank the main bank
- @param transactions of the bank
- @param transaction structure to add to transactions
+ @brief Adds a new transaction to the end of the transactions list.
+
+ Recursively traverses to the end of the list and appends the transaction.
+ 
+ @param bank Pointer to the bank (freed on allocation failure).
+ @param transactions Pointer to the head of the transactions list.
+ @param transaction Transaction to add.
  */
 void addNewTransaction(Bank ** bank, Node ** transactions,  Transaction * transaction) {
-    
-    //exit condition
-    if (*transactions == NULL) {
-        //allocate memory for a new transaction
-        Node * temp = (Node*)malloc(sizeof(Node));
+    if (*transactions == NULL) { // Base case: reached the end of the list
+  
+        Node * temp = (Node*)malloc(sizeof(Node));  // allocate memory to the new transaction
         
-        //check if allocation failed
-        if (temp == NULL) {
-            //free all memory
+        if (temp == NULL) { // free if allocation failed
             freeBank(bank);
         }
         
-        //initialize data to the new transaction address that was send to the function
-        temp->data = (Transaction*)transaction;
-        
-        //point last transaction to NULL
-        temp->next = NULL;
-        *transactions = temp;
+        temp->data = (Transaction*)transaction; // update node data
+
+        temp->next = NULL; // set the tail next to nullptr
+        *transactions = temp; // point last node to the new transaction
         return;
     }
-    //call itself next
-    addNewTransaction(bank, &(*transactions)->next , transaction);
+
+    addNewTransaction(bank, &(*transactions)->next , transaction); // recursive call
 }
 
 /**
- @brief function to check strtol output
- the function will get strtol endptr and validate the amount
- @param amount inserted by the user
- @param endptr strtol endptr
- @return 1 if the amount is 0 or positive and its a valid number
- */
+ @brief Validates a number converted from a string using strtol.
+ Checks that the conversion consumed the entire string and that the number
+ is positive.
+ @param amount The integer value returned by strtol.
+ @param endptr Pointer to the first invalid character after strtol conversion.
+            Used to verify the entire string was a valid number.
+ @return 1 if the input is a valid positive number, 0 otherwise.
+*/
 int isValidInformation(int amount, char * endptr) {
-    //check if endptr point to char or the amount if negative and return
     if (*endptr != '\0' || amount <= 0) {
-        return 0;
+        return 0;   // invalid input
     }
-    return 1;
+    return 1;       // valid input
 }
 
 /**
- @brief function to handle user withdraw actions
- the function will validate the user inserted data and withdraw the money from its account
- @param userAccount the user account
- @param amount the user inserted amount
- @param endptr strtol endptr to validate the amount
- @return 1 if the money withdraned  successfully and 0 otherwise
- */
+ @brief Handles a withdrawal request from a user account.
+ Validates the requested amount and deducts it from the account balance
+ if sufficient funds are available.
+ @param userAccount Pointer to the user's account node.
+ @param amount Amount requested to withdraw.
+ @param endptr Pointer returned by strtol for validating the input amount.
+ @return 1 if the withdrawal is successful, 0 otherwise.
+*/
 int handleWithdraw(Node * userAccount, int amount, char * endptr) {
-    //validate the user amount and print error
+    // Validate the input amount and print an error if invalid
     if (!isValidInformation(amount, endptr)) {
         printf("Invalid amount");
         return 0;
     }
-    //check for user balance
+
+    // Check if the user has enough balance
     if (((Account*)userAccount->data)->balance < amount) {
         printf("Not enough money\n");
         return 0;
     }
-    //updating user account balace and return
+
+    // Deduct the amount from the user's account balance
     ((Account*)userAccount->data)->balance -= amount;
     return 1;
 }
 
 /**
- @brief function to handle deposit action from the user
- the function will validate the user information and deposit money to its account
- @param userAccount the user account
- @param amount transaction
- @param endptr the endptr of strtol to validate the amount
- @return 1 if operation succeeded 0 otherwise
- */
+ @brief Handles a deposit action for a user account.
+ Validates the input amount and adds it to the account balance.
+ @param userAccount Pointer to the user's account node.
+ @param amount Amount to deposit.
+ @param endptr Pointer returned by strtol for validating the input amount.
+ @return 1 if the deposit is successful, 0 otherwise.
+*/
 int handleDeposit(Node * userAccount, int amount, char * endptr) {
-    //checks for input validity and prints
-    if (!isValidInformation(amount, endptr)) {
-        printf("Invalid amount\n");
-        return 0;
-    }
-    //updating the user account and returns success
-    ((Account*)userAccount->data)->balance += amount;
-    return 1;
-}
-/**
- @brief function to add transaction to a gievn transactions list
- the function works as a middleman making adding transaction to the list more approachable
- @param from  transcation
- @param to transactions
- @param amount transaction
- @param bank the main bank
- @param transactions list of transactions
- */
-void addTransactionToList(unsigned int from, unsigned int to, int amount, Bank ** bank,\
-                          Node ** transactions) {
-    //makes single transaction and adding it to transactions
-    Transaction * transaction = makeTransaction(amount, from, to, bank);
-    addNewTransaction(bank, transactions, transaction);
+	// Validate the input amount and print an error if invalid
+	if (!isValidInformation(amount, endptr)) {
+		printf("Invalid amount\n");
+		return 0;
+	}
+
+	// Add the amount to the user's account balance
+	((Account*)userAccount->data)->balance += amount;
+	return 1;
 }
 
 /**
- @brief function to make deposit or withdraw
- the function will handle each case calling the appropriate function to deal with the action
- @param bank bank on the main
- */
+ @brief Adds a new transaction to a given transactions list.
+ Creates a Transaction structure and appends it to the list.
+ @param from Source account number.
+ @param to Destination account number.
+ @param amount Transaction amount.
+ @param bank Pointer to the bank (freed on allocation failure).
+ @param transactions Pointer to the head of the transactions list.
+*/
+void addTransactionToList(unsigned int from, unsigned int to, int amount, Bank ** bank, Node ** transactions) {
+	// Create a new transaction structure
+	Transaction * transaction = makeTransaction(amount, from, to, bank);
+
+	// Add the transaction to the transactions list
+	addNewTransaction(bank, transactions, transaction);
+}
+
+/**
+ @brief Handles a deposit or withdrawal action for a user account.
+ Prompts the user for an action (deposit or withdraw) and executes it,
+ validating input and recording the transaction.
+ @param bank Pointer to the bank structure.
+*/
 void withdrawOrDeposit(Bank ** bank) {
-    //init consts
-    const char withdraw[] = "withdraw";
-    const char deposit[] = "deposit";
-    
-    //gets the account number from user and the user account
-    unsigned int accountNumber = getAccountNumberInput();
-    Node * userAccount = getAccountByNumber((*bank)->accounts, accountNumber);
-    
-    //if no user was found print
-    if (userAccount == NULL) {
-        printAccountNotFound();
-        return;
-    }
-    
-    //gets the user choice
-    char *str = getInfiniteString("Would you like to deposit or withdraw money?", bank);
-    //init transactions detalis variables
-    int amount;
-    char * amountStr;
-    char * endptr;
-    //checks for the users different choices
-    if (!strcmp(str, withdraw)) {
-        //get the amount and run strtol on it
-        amountStr = getInfiniteString("How much money would you like to withdraw?", bank);
-        amount = (int)strtol(amountStr, &endptr, BASE);
-        
-        //handles withdraw and recording the transaction if details are currect
-        if (handleWithdraw(userAccount, amount, endptr)) {
-            //make transaction from user account to account number 0 and print
-            addTransactionToList(accountNumber, ZERO_ACCOUNT, amount, bank, &(*bank)->transactions);
-            printf("Money withdrawn successfully; your new balance is %d\n",\
-                   ((Account*)userAccount->data)->balance);
-        }
-        //free allocated memory
-        free(amountStr);
-        free(str);
-        return;
-        //check for deposit
-    } else if (!strcmp(str, deposit)) {
-        //get the amount from the user and run strtol on it
-        amountStr = getInfiniteString("How much money would you like to deposit?", bank);
-        amount = (int)strtol(amountStr, &endptr, BASE);
-        
-        //handles deposit and recording the transaction if details are currect
-        if (handleDeposit(userAccount, amount, endptr)) {
-            //make transaction from account number 0 to user account and print
-            addTransactionToList(ZERO_ACCOUNT, accountNumber, amount, bank, &(*bank)->transactions);
-            printf("Money deposited successfully; your new balance is %d\n",\
-                   ((Account*)userAccount->data)->balance);
-        }
-        //free allocated memory
-        free(amountStr);
-        free(str);
-        return;
-    }
-    
-    //handles invalid transactions by free allocatoed memory and printing
-    free(str);
-    printf("Invalid action\n");
-    return;
+	const char withdraw[] = "withdraw";
+	const char deposit[] = "deposit";
+
+	// Get the account number and fetch the corresponding user account
+	unsigned int accountNumber = getAccountNumberInput();
+	Node * userAccount = getAccountByNumber((*bank)->accounts, accountNumber);
+
+	// If no account was found, print an error and return
+	if (userAccount == NULL) {
+		printAccountNotFound();
+		return;
+	}
+
+	// Get the user's choice: deposit or withdraw
+	char *str = getInfiniteString("Would you like to deposit or withdraw money?", bank);
+	int amount;
+	char * amountStr;
+	char * endptr;
+
+	if (!strcmp(str, withdraw)) {
+		// Get the withdrawal amount from the user
+		amountStr = getInfiniteString("How much money would you like to withdraw?", bank);
+		amount = (int)strtol(amountStr, &endptr, BASE);
+
+		// Execute withdrawal if valid and record the transaction
+		if (handleWithdraw(userAccount, amount, endptr)) {
+			addTransactionToList(accountNumber, ZERO_ACCOUNT, amount, bank, &(*bank)->transactions);
+			printf("Money withdrawn successfully; your new balance is %d\n",
+			       ((Account*)userAccount->data)->balance);
+		}
+
+		free(amountStr);
+		free(str);
+		return;
+
+	} else if (!strcmp(str, deposit)) {
+		// Get the deposit amount from the user
+		amountStr = getInfiniteString("How much money would you like to deposit?", bank);
+		amount = (int)strtol(amountStr, &endptr, BASE);
+
+		// Execute deposit if valid and record the transaction
+		if (handleDeposit(userAccount, amount, endptr)) {
+			addTransactionToList(ZERO_ACCOUNT, accountNumber, amount, bank, &(*bank)->transactions);
+			printf("Money deposited successfully; your new balance is %d\n",
+			       ((Account*)userAccount->data)->balance);
+		}
+
+		free(amountStr);
+		free(str);
+		return;
+	}
+
+	// Handle invalid action input
+	free(str);
+	printf("Invalid action\n");
 }
 
 /**
- @brief function to get make transactions list from given transactions string
- @param instructionsString  the instructions string
- @param bank the main bank
- @return pointer to the head of the new list
- */
+ @brief Parses a transaction instructions string and builds a linked list of transactions.
+ Each transaction in the string should be in the format: from-to:amount, separated by commas.
+ 
+ @param instructionsString The input string containing transaction instructions.
+ @param bank Pointer to the bank structure (used to create transactions).
+ @return Pointer to the head of the new transactions list, or NULL if the string is invalid.
+*/
 Node * getTransactionsFromString(char * instructionsString, Bank ** bank) {
-    
-    //initialize transcations variable
-    Node * transactions = NULL;
-    //initialize tok and gets the first of the string
-    char * tok = strtok(instructionsString, "-");
-    //initialize endptr to strtol
-    char * endptr;
-    while (tok != NULL) {
-        //gets the from part and run strtol on it
-        unsigned int from = (unsigned int) strtol(tok, &endptr, BASE);
-        //get the next part
-        tok = strtok(0, ":");
-        //validate the part and check for unexpected end of string
-        if (!isValidInformation(from, endptr) || tok == NULL)  {
-            //frees transcations
-            free(transactions);
-            return NULL;
-        }
-        //gets the from part and run strtol on it
-        unsigned int to = (unsigned int) strtol(tok, &endptr, BASE);
-        
-        //get the next part
-        tok = strtok(0, ",");
-        
-        //validate the part and check for unexpected end of string
-        if (!isValidInformation(to, endptr) || tok == NULL)  {
-            free(transactions);
-            return NULL;
-        }
-        
-        //gets the from part and run strtol on it
-        int amount = (int) strtol(tok, &endptr, BASE);
-        
-        //skip all commas and jump next
-        tok = strtok(0, "[^,]-");
-        //validate the part
-        if (!isValidInformation(amount, endptr)) {
-            free(transactions);
-            return NULL;
-        }
-        
-        //edge case
-        if (to == from) {
-            free(transactions);
-            return NULL;
-        }
-    
-        //adds the transaction
-        addTransactionToList(from, to, amount, bank, &transactions);
-        
-        //check for end of string
-        if (tok == NULL) {
-            return transactions;
-        }
-    }
-    
-    //free transactions if the string wasn't valid
-    free(transactions);
-    return NULL;
+	Node * transactions = NULL;  // Head of the transactions list
+	char * tok = strtok(instructionsString, "-");  // Start tokenizing string by '-'
+	char * endptr;
+
+	while (tok != NULL) {
+		// Parse 'from' account number
+		unsigned int from = (unsigned int) strtol(tok, &endptr, BASE);
+
+		tok = strtok(0, ":");  // Move to 'to' account part
+		if (!isValidInformation(from, endptr) || tok == NULL)  {
+			free(transactions);
+			return NULL;
+		}
+
+		// Parse 'to' account number
+		unsigned int to = (unsigned int) strtol(tok, &endptr, BASE);
+
+		tok = strtok(0, ",");  // Move to amount part
+		if (!isValidInformation(to, endptr) || tok == NULL)  {
+			free(transactions);
+			return NULL;
+		}
+
+		// Parse transaction amount
+		int amount = (int) strtol(tok, &endptr, BASE);
+
+		tok = strtok(0, "[^,]-");  // Move to the next transaction
+		if (!isValidInformation(amount, endptr)) {
+			free(transactions);
+			return NULL;
+		}
+
+		// Validate edge case: 'from' and 'to' cannot be the same
+		if (to == from) {
+			free(transactions);
+			return NULL;
+		}
+
+		// Add transaction to the list
+		addTransactionToList(from, to, amount, bank, &transactions);
+
+		// End of string check
+		if (tok == NULL) {
+			return transactions;
+		}
+	}
+
+	// If parsing failed, free transactions list
+	free(transactions);
+	return NULL;
 }
 
 /**
- @brief function to check if a given character is a digit
- @param ch char to check
- @return 1 if its a digit 0 otherwise
+ @brief Checks if a given character is a digit.
+
+ @param ch Character to check.
+ @return 1 if the character is a digit ('0'-'9'), 0 otherwise.
  */
 int isPositivedigit(char ch) {
-    return ch <= '9' && ch >= '0';
+    return ch >= '0' && ch <= '9';
 }
 
-
 /**
- @brief function to stil all positive digits from string
- the function will advance the pointer to the string
- @param str address of the string to advance
+ @brief Skips all positive digits in a string.
+
+ Advances the string pointer while it points to digit characters ('0'-'9').
+
+ @param str Address of the string pointer to advance.
  */
 void skipDigits(char ** str) {
-    //advance string all while ite value is a positive number
     while (isPositivedigit(**str)) {
         (*str)++;
     }
 }
 
 /**
- @brief function to validate transactions string
- the function will recursively validate if the string in formated as from-to:amount with no characters that isn't digit
- @param str the string to validate
- @return 1 if string is valid 0 otherwise
+ @brief Validates a transactions string.
+
+ Recursively validates if the string is formatted as "from-to:amount" for each transaction, 
+ with optional multiple transactions separated by commas, and containing only digits where expected.
+
+ @param str The string to validate.
+ @return 1 if the string is valid, 0 otherwise.
  */
-int validateTransactionString(char * str){
-    //checks for non digit in the begining
+int validateTransactionString(char * str) {
     if (!isPositivedigit(*str)) {
         return 0;
     }
-    //skips all digits
+    
     skipDigits(&str);
-    //checks for the cheracter '-'
+    
     if (!*str || *str != '-') {
         return 0;
     }
-    //increment
     str++;
-    //skips all digits
+    
     skipDigits(&str);
-    //checks for the cheracter ':'
+    
     if (!*str || *str != ':') {
         return 0;
     }
-    //increment
     str++;
-    //skips all digits
+    
     skipDigits(&str);
-    //checks for end of string
+    
     if (!*str) {
         return 1;
     }
-    //check for multiple transactions
+    
     if (*str != ',') {
         return 0;
     }
-    //if multiple transactions skip the commas
+    
     while (*str == ',') {
         str++;
-        //if no transaction after the comma return error
         if (!*str) {
             return 0;
         }
     }
-    //if end of string return
+    
     if (!*str) {
         return 1;
     }
-    //calls
+    
     return validateTransactionString(str);
 }
 
 /**
- @brief function to execute all transactions from given string
- the function will run recursivly executing every commend and on faliure reveser the made transactions
- @param accounts bank accounts list
- @param transactios transactions list to execute
- @return 1 if execution completed 0 otherwise
- */
-int executeTransferInstructions(Node * accounts, Node * transactios) {
+ @brief Executes all transactions from a given list.
 
-    //checks for exit condition - no transactions
-    if (transactios == NULL) {
+ Recursively executes each transaction in order. If any transaction fails 
+ (due to missing accounts or insufficient balance), all previous operations are reversed.
+
+ @param accounts The list of bank accounts.
+ @param transactions The list of transactions to execute.
+ @return 1 if all transactions were executed successfully, 0 otherwise.
+ */
+int executeTransferInstructions(Node * accounts, Node * transactions) {
+
+    // Base case: no more transactions
+    if (transactions == NULL) {
         return 1;
     }
-    //init transcations details
-    unsigned int from = ((Transaction*)transactios->data)->fromAccount;
-    unsigned int to = ((Transaction*)transactios->data)->toAccount;
-    int amount = ((Transaction*)transactios->data)->amount;
-    //init the accounts invloved in the transcation
+
+    // Extract transaction details
+    unsigned int from = ((Transaction*)transactions->data)->fromAccount;
+    unsigned int to = ((Transaction*)transactions->data)->toAccount;
+    int amount = ((Transaction*)transactions->data)->amount;
+
+    // Get the accounts involved
     Node * fromAccount = getAccountByNumber(accounts, from);
     Node * toAccount = getAccountByNumber(accounts, to);
-    //checks for account that does not exists
+
+    // Fail if any account does not exist
     if (fromAccount == NULL || toAccount == NULL) {
         return 0;
     }
-    //check for balance less than transaction amount
+
+    // Fail if fromAccount has insufficient balance
     if (((Account*)fromAccount->data)->balance < amount) {
         return 0;
     }
-    //update the account
+
+    // Perform the transaction
     ((Account*)fromAccount->data)->balance -= amount;
     ((Account*)toAccount->data)->balance += amount;
-    
-    //calls the function with next
-    int opSucceed = executeTransferInstructions(accounts, transactios->next);
 
-    //checks for operations faliure and undo every operation made so far
+    // Recurse to execute remaining transactions
+    int opSucceed = executeTransferInstructions(accounts, transactions->next);
+
+    // Undo transaction if subsequent operations failed
     if (!opSucceed) {
         ((Account*)toAccount->data)->balance -= amount;
         ((Account*)fromAccount->data)->balance += amount;
         return 0;
     }
+
     return 1;
 }
 
 /**
- @brief function to concate to lists
- @param list1 the list to cancate to
- @param list2 the list to concate
- */
-void concateTwoList(Node ** list1, Node ** list2) {
+ @brief Concatenates two linked lists.
 
-    //store the head of the list to return to it later
+ Appends all nodes of list2 to the end of list1. If list1 is empty, it is set to list2.
+
+ @param list1 Pointer to the first list (modified to include list2).
+ @param list2 Pointer to the second list to append.
+ */
+void concatenateTwoList(Node ** list1, Node ** list2) {
+
+    // Store the head of list1 to restore it later
     Node * head = *list1;
 
-    //if the list is empty assign it and return
+    // If list1 is empty, assign it to list2 and return
     if ((*list1) == NULL) {
         (*list1) = (*list2);
         return;
     }
 
-    //advane list1 to its end
+    // Advance list1 to its last node
     while ((*list1)->next != NULL) {
         (*list1) = (*list1)->next;
     }
-    //assing its next to point to list2
+
+    // Link the last node of list1 to list2
     (*list1)->next = *list2;
-    //restore its head
+
+    // Restore the head of list1
     (*list1) = head;
 }
 
-
 /**
- @brief function to free list of transactions
- the function will free the date from the transaction and also free the transactions list
- @param transactions to be freed
+ @brief Frees a list of transactions.
+
+ Frees the memory of each transaction’s data and the nodes themselves.
+
+ @param transactions Pointer to the head of the transaction list.
  */
 void freeListOfTransaction(Node * transactions) {
-    
+
     Node * temp;
-    //runs for every transaction
+    // Iterate through all transactions
     for (Node * transaction = transactions; transaction != NULL;) {
-        //free the data
+        // Free transaction data
         free(transaction->data);
-        //save transaction next to not lost access to it
+
+        // Save pointer to next node
         temp = transaction->next;
-        //free the transaction itself
+
+        // Free the node itself
         free(transaction);
-        //point to next transaction
+
+        // Move to the next transaction
         transaction = temp;
     }
 }
 
-
 /**
- @brief function to exec multyple transactions
- the function stored seperate transactions list and execute them and conact them to the bank
- @param bank the bank on the main
- @param insructionsString the instructions inserted by the user
+ @brief Executes multiple transactions from a string of instructions.
+
+ Converts a user-provided instructions string into a transaction list,
+ executes the transactions, and appends them to the bank's transaction list
+ if execution is successful.
+
+ @param bank Pointer to the bank structure.
+ @param instructionsString The user-provided instructions string.
  */
-void makeInstructionsList(Bank ** bank, char * insructionsString) {
-    //initialize transactions from the string
-    Node * transcations = getTransactionsFromString(insructionsString, bank);
+void makeInstructionsList(Bank ** bank, char * instructionsString) {
+    // Initialize transactions list from the string
+    Node * transactions = getTransactionsFromString(instructionsString, bank);
     
-    //intializee operation flag to print invalid instructions
+    // Initialize operation flag to detect invalid instructions
     int operationResult = 0;
-    //runs on every transaction
-    if (transcations != NULL) {
-        //tryies execute the transactions and store the result of the opeartiion
-        operationResult = executeTransferInstructions(((*bank)->accounts), transcations);
-        //checks for operation faliure and concate and print on success
+
+    // If transactions were parsed successfully
+    if (transactions != NULL) {
+        // Attempt to execute the transactions and store the result
+        operationResult = executeTransferInstructions((*bank)->accounts, transactions);
+
+        // On success, append executed transactions to the bank's list
         if (operationResult) {
-            concateTwoList(&((*bank)->transactions), &transcations);
+            concatenateTwoList(&((*bank)->transactions), &transactions);
             printf("Instructions executed successfully\n");
         }
     }
-    //free and prints if the operation falied
+
+    // On failure, free the transaction list and print an error
     if (!operationResult) {
-        freeListOfTransaction(transcations);
+        freeListOfTransaction(transactions);
         printf("Invalid instructions\n");
         return;
     }
-    
 }
 /**
- @brief function to get instruction string frmo the user validate it partially and making the transactions
- @param bank bank on the main
+ @brief Reads a transaction instruction string from the user, validates it, and executes the transactions.
+
+ Prompts the user for instructions, performs basic structure validation (from-to:amount),
+ and creates the transactions in the bank if valid.
+
+ @param bank Pointer to the bank structure.
  */
 void getInstructionsString(Bank ** bank) {
-    //initialize the instruction string from the user
+    // Read the instructions string from the user
     char * str = getInfiniteString("Enter instructions:", bank);
     
-    //validating the string for its structure i.e from-to:amount
+    // Validate the string for correct transaction structure
     if (!validateTransactionString(str)) {
-        //frees str and prints error
-        free(str);
+        free(str); // Free memory on error
         printf("Invalid instructions\n");
         return;
     }
-    //makes the transaction and frees str
+
+    // Create and execute transactions, then free the string
     makeInstructionsList(bank, str);
     free(str);
 }
 
 
 /**
- @brief function to print the user transactions
- @param transactions the transactions made on the bank
- @param accountNum user account number
+ @brief Prints all transactions related to a specific user account.
+
+ Iterates through the bank's transaction list and prints each transaction involving the account.
+ Prints "No transactions" if the account has no transactions.
+
+ @param transactions Pointer to the head of the transaction list.
+ @param accountNum Account number of the user.
  */
 void printUserTransactions(Node * transactions, unsigned int accountNum) {
-    //initialize
     unsigned int from;
     unsigned int to;
     int amount;
-    //initialize flag to print "no transactions"
-    int hasTransactions = 0;
-    //runs on ecery transaction on bank
+    int hasTransactions = 0; // Flag to detect if the user has any transactions
+
+    // Iterate over all transactions
     while (transactions != NULL) {
-        //assign the variable with the transaction detalis
         from = ((Transaction *)transactions->data)->fromAccount;
         to = ((Transaction *)transactions->data)->toAccount;
         amount = ((Transaction *)transactions->data)->amount;
-        
-        //checks if the user account wes part of the transaction
+
+        // Check if the transaction involves the user
         if (from == accountNum || to == accountNum) {
-            //prints transcation line once
-            if (transactions && !hasTransactions) {
+            if (!hasTransactions) {
                 printf("Transactions:\n");
                 hasTransactions = 1;
             }
-            //check for the nature of the transactions, from 0 - deposit
+
+            // Determine transaction type and print accordingly
             if (from == ZERO_ACCOUNT) {
                 printf("Deposited %d\n", amount);
-                //to 0 - withdraw
             } else if (to == ZERO_ACCOUNT) {
                 printf("Withdrew %d\n", amount);
-                //deposited to the account from another account
-            } else if (to == accountNum){
-                printf("%d from %u\n",amount, from);
-                //user deposited to another account
+            } else if (to == accountNum) {
+                printf("%d from %u\n", amount, from);
             } else {
                 printf("%d to %u\n", amount, to);
             }
         }
-        //advancing transactions to next transaction
+
+        // Move to the next transaction
         transactions = transactions->next;
     }
-    //check for no transaction for the user and prints
+
+    // If no transactions found, notify the user
     if (!hasTransactions) {
         printf("No transactions\n");
     }
 }
-
 /**
- @brief function that prints one account detalis
- the function will get the account number from user and print its detalis
- @param bank bank stores in the maim
+ @brief Prints details of a specific account.
+
+ Prompts the user for an account number and prints its details, including the balance and related transactions.
+
+ @param bank Pointer to the main bank structure.
  */
 void viewAccount(Bank ** bank) {
-    //get the user account number and fetch the user account
+    // Get the user account number and fetch the account
     unsigned int accountNum = getAccountNumberInput();
     Node * account = getAccountByNumber((*bank)->accounts, accountNum);
-    
-    //check for account not found and prints error msg
+
+    // Check if account exists
     if (account == NULL) {
         printAccountNotFound();
         return;
     }
-    
-    //initialize account number for better visibility and print the user account details
+
+    // Print account details
     unsigned int accountNumber = ((Account*)account->data)->accountNumber;
-    printf("Account #%u (%s)\nBalance: %d\n", accountNumber,\
+    printf("Account #%u (%s)\nBalance: %d\n", accountNumber,
            ((Account*)account->data)->accountHolder, ((Account*)account->data)->balance);
-   
-    //initialize transaction from the bank and calls prints it
+
+    // Print transactions related to this account
     Node * transactions = (*bank)->transactions;
     printUserTransactions(transactions, accountNumber);
 }
 
+
 /**
- @brief function to handle the user input for the menu choice
- @param choice the user entered choice
- @param bank  bank stores in the main
- @return 0 in case the player want to exit 1 if not
+ @brief Handles a user's menu choice.
+
+ Executes the appropriate bank operation based on the user's input choice.
+
+ @param choice Character entered by the user representing the menu choice.
+ @param bank Pointer to the main bank structure.
+ @return 0 if the user chooses to exit, 1 otherwise.
  */
 int handleUserChoice(char choice, Bank ** bank) {
-
-    //check for every possible choice case
     switch (choice) {
         case '0':
-            freeBank(bank);
+            freeBank(bank); // Exit and free the bank
             break;
         case '1':
-            getAccountDetails(bank);
+            getAccountDetails(bank); // Create new account
             break;
         case '2':
-            deleteAccount(&((*bank)->accounts));
+            deleteAccount(&((*bank)->accounts)); // Delete an account
             break;
         case '3':
-            updateAccount(bank);
+            updateAccount(bank); // Update account details
             break;
         case '4':
-            withdrawOrDeposit(bank);
+            withdrawOrDeposit(bank); // Handle deposit/withdraw
             break;
         case '5':
-            getInstructionsString(bank);
+            getInstructionsString(bank); // Execute transfer instructions
             break;
         case '6':
-            viewAccount(bank);
+            viewAccount(bank); // View specific account
             break;
         default:
             printf("Invalid option\n");
     }
-    
-    //return 1 to keep the main's loop
-    return 1;
+
+    return 1; // Continue main loop
 }
 
 /**
- @brief function to print the menu
+ @brief Prints the main menu options.
  */
 void printMenu() {
-    printf("Choose an option:\n\
-0. Exit\n\
-1. Create account\n\
-2. Delete account\n\
-3. Update account\n\
-4. Deposit / Withdraw money\n\
-5. Transferring\n\
-6. View account\n");
+    printf("Choose an option:\n"
+           "0. Exit\n"
+           "1. Create account\n"
+           "2. Delete account\n"
+           "3. Update account\n"
+           "4. Deposit / Withdraw money\n"
+           "5. Transferring\n"
+           "6. View account\n");
 }
-
-
