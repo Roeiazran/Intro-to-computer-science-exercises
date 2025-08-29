@@ -1,33 +1,28 @@
-# Bank
+# Bank Management System
 
-This program simulates a bank system, with a focus on memory allocation and leaks through the use of linked lists and structures.
-The program supports the following features:
-1. Create a new account:
-Given an account number, if it does not already exist in the bank, the program will create an account with the specified account holder’s name.
-2. Delete an existing account:
-Given an account number of an existing account, the program will delete that account.
-3. Update an existing account:
-Given an account number of an existing account, the program will update the account holder’s name.
-4. Withdraw and deposit to an account:
-5. Transfer funds (executing multiple transactions):
-Example: ```30-25:40, 20-60:100``` represents transferring 40 from account 30 to 25 and 100 from account 20 to 60. This feature includes a mechanism that guarantees all transfers will be executed only if all are valid.
-6. View an account:
-Prints the account owner’s details, including all past transactions associated with the account.
---- 
+## Overview
+This C program simulates a simple **banking system** that allows users to:
 
-To run the programm simply execute:
+- Create, delete, and update accounts.
+- Deposit and withdraw money.
+- Perform transfer instructions between accounts.
+- View account details and related transactions.
 
-```
-gcc bank.c
-```
-and then
-```
-./a.out
-```
+It maintains **linked lists** for accounts and transactions, dynamically allocating memory as needed.
 
---
+---
 
-Running demonstration:
+## Features
+- Create accounts with unique account numbers.
+- Deposit and withdraw money with validation.
+- Execute multiple transactions atomically: all succeed or none.
+- View transactions for a specific account.
+- Dynamic memory management for account holder names and instructions.
+- Graceful handling of invalid inputs.
+
+---
+
+## Running demonstration:
 
 ```
 
@@ -184,6 +179,3 @@ Please select an option:
 0
 
 ```
-
- 
-
