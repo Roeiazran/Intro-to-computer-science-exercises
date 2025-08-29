@@ -1,45 +1,30 @@
-# Relations Tree Manager.
+# Family Tree Management Program
 
-This program manages a family tree (see diagram) and focuses on recursive programming, memory allocation and deallocation, structures, and pointers.
-The program supports the following features:
-1. Add a family head:
-A person is considered a family head if they do not have known parents in the tree. Each person must have a unique name. The program supports names of unlimited length using dynamic memory allocation.
-2. Marry two people:
-Two people can be married if they do not share a common ancestor, are of the appropriate age (18 or older), and neither is already married.
-3. Add a new descendant:
-Married couples can register a new child. A new baby is always assigned an age of 0.
-4. Print a family tree:
-Given a family head, the program prints their family tree starting from them. Descendants are printed in the order they were added (which also corresponds to their age). Each generation is indented with a tab (or space), and each couple is printed on the same line.
+## Description
+A C program that lets you build and manage a dynamic family tree.  
+Supports adding family heads, marrying people, adding children, printing the tree, counting members, and finding relatives by degree.
 
-Example:
+---
 
-```
-King Charles (74) - Princess Diana (61)
-    Prince William (41) - Catherine Middleton (42)
-        Prince George (10)
-        Princess Charlotte (8)
-        Prince Louis (5)
-    Prince Harry (39) - Meghan Markle (41)
-        Prince Archie (4)
-        Princess Lilibeth (2) 
-```
+## Features
+- Add a family head  
+- Marry two people (with age and relationship validation)  
+- Add offspring to married couples  
+- Print the family tree top-down with generation indentation  
+- Increment ages for all members  
+- Count total people in the tree  
+- Print relatives at a specified degree (e.g., cousins)  
 
-5. Add a specified number of years to any person in the tree.
+---
 
-6. Count the total number of people in the tree.
+## Data Structures
+- **Person**: Stores name, age, spouse (`marriedTo`), children, parent, and `visited` flag.  
+- **Node**: Linked list node pointing to a `Person` and the next node.  
+- **Persons**: Wrapper struct containing the head of the linked list.  
 
-7. Print relatives at a given degree of kinship, sorted alphabetically by name.
+---
 
-    * Given a person’s name and a degree of closeness, all relatives at that degree will be printed in the same format.
-
-Degree 0: The person themself.
-Degree 1: The person and their siblings.
-Degree 2: The person and their cousins who share the same grandparents.
-Degree 3: The person and all relatives who share a great-grandparent.
-
-And so on. 
-
-#
+## Running demonstration
 
 For demonstration, i have created the following diagram:
 
